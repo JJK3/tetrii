@@ -1,0 +1,77 @@
+#!/bin/sh
+# This script was created by make-mred-launcher
+
+if [ "$PLTHOME" = '' ] ; then
+  PLTHOME="/usr/plt"
+  export PLTHOME
+fi
+
+# Find X flags and shift them to the front
+findxend()
+{
+ oneargflag=''
+ case "$1" in
+  -display)
+     oneargflag="$1"
+     xa="$2"
+   ;;
+  -geometry)
+     oneargflag="$1"
+     xb="$2"
+   ;;
+  -bg | -background)
+     oneargflag="$1"
+     xc="$2"
+   ;;
+  -fg | -foregound)
+     oneargflag="$1"
+     xd="$2"
+   ;;
+  -font)
+     oneargflag="$1"
+     xe="$2"
+   ;;
+  -name)
+     oneargflag="$1"
+     xf="$2"
+   ;;
+  -selectionTimeout)
+     oneargflag="$1"
+     xg="$2"
+   ;;
+  -title)
+     oneargflag="$1"
+     xh="$2"
+   ;;
+  -xnllanguage)
+     oneargflag="$1"
+     xi="$2"
+   ;;
+  -xrm)
+     oneargflag="$1"
+     xj="$2"
+   ;;
+  -iconic)
+    xk=yes
+  ;;
+  -rv | -reverse)
+    xl=yes
+  ;;
+  +rv)
+    xm=yes
+  ;;
+  -synchronous)
+    xn=yes
+  ;;
+  *)
+    exec "${PLTHOME}/bin/mred"  ${xa+"-display"} ${xa+"$xa"} ${xb+"-geometry"} ${xb+"$xb"} ${xc+"-bg"} ${xc+"$xc"} ${xd+"-fg"} ${xd+"$xd"} ${xe+"-font"} ${xe+"$xe"} ${xf+"-name"} ${xf+"$xf"} ${xg+"-selectionTimeout"} ${xg+"$xg"} ${xh+"-title"} ${xh+"$xh"} ${xi+"-xnllanguage"} ${xi+"$xi"} ${xj+"-xrm"} ${xj+"$xj"} ${xk+"-iconic"} ${xl+"-rv"} ${xm+"+rv"} ${xn+"-synchronous"} '-qmvt' '/usr/plt/collects/drscheme/private/launcher-bootstrap.ss' '--' '(module mod-name mzscheme(require(lib "pconvert.ss")(lib "pretty.ss"))(provide init-code)(define(executable-error-value->string-handler val size)(let((o(open-output-string)))(render-value val o)(let((s(get-output-string o)))(if(<=(string-length s)size)s(string-append(substring s 0(- size 3))"...")))))(define(render-value value port)(parameterize((pretty-print-columns(quote infinity)))(pretty-print(convert-value value)port)))(define(convert-value value)value)(require(lib "errortrace.ss" "errortrace"))(define(init-code)(begin(void)(namespace-require(quote(file "/usr/plt/teachpack/htdp/draw.ss"))))(current-inspector(make-inspector))(error-value->string-handler executable-error-value->string-handler)(read-case-sensitive #f)))' '/home/stomper/tetris/tetris.scm' '(lib "plt-mred.ss" "lang")' 'mzscheme' '#t' '(mzscheme (lib "mred.ss" "mred"))'  ${1+"$@"}
+  ;;
+ esac
+ shift
+ if [ "$oneargflag" != '' ] ; then
+   if [ "${1+n}" != 'n' ] ; then echo $0: missing argument for standard X flag $oneargflag ; exit 1 ; fi
+   shift
+ fi
+ findxend ${1+"$@"}
+}
+findxend ${1+"$@"}
