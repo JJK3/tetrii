@@ -1,9 +1,16 @@
 #include <stdbool.h>
 
+#define WIDTH 10
+#define HEIGHT 20
+
 #ifndef PIECES_H
 #define PIECES_H
 
-//typedef struct Point Point;
+typedef struct LinkedList {
+  void * car;
+  struct LinkedList * cdr;
+} LinkedList ;
+
 typedef struct {
   int x; 
   int y;
@@ -15,30 +22,32 @@ typedef struct {
   Point ** blocks;
 } Piece ;
 
-typedef struct LinkedList {
-  void * car;
-  struct LinkedList * cdr;
-} LinkedList ;
+/** A board where (0,0) is on the top-left of the board. */
+typedef struct {
+  int height;
+  int width;
+  int score;
+  Piece * current_piece;
+  Point * placed_blocks[WIDTH][HEIGHT];
+} Board ;
 
+
+
+
+
+/** Linked List functions */
 LinkedList * linked_list_create();
 void linked_list_free(LinkedList * pl);
 LinkedList * linked_list_cons(LinkedList * list, void * piece);
 
 
-/** A board where (0,0) is on the top-left of the board. */
-typedef struct {
-  int height;
-  int width;
-  Piece * current_piece;
-  LinkedList * placed_pieces;
-} Board ;
 
 /** Point functions */
 Point * point_create(int x, int y);
 bool point_equals(Point *p1, Point *p2);
-// TODO: write a test for this...
-bool piece_contains_point(Piece * piece, Point * test_point);
 void point_print(Point *p);
+
+
 
 /** Piece functions */
 Piece * line(int x, int y);
@@ -55,15 +64,16 @@ void piece_rotate_clockwise(Piece *p);
 void piece_rotate_counter_clockwise(Piece *p);
 bool piece_equals(Piece *p1, Piece *p2);
 
+
+
 /** Board functions */
-
-/** Find lines that has been completed.  
- *  Returns NULL if none found. 
- */
-Board * board_create(int height, int width);
+Board * board_create();
 void board_free (Board * b);
-int ** find_completed_lines(Board * b);
-
+bool board_is_row_complete(Board * b, int row);
+int * board_find_completed_rows(Board * b);
+void board_place_piece(Board * b, Piece * p);
+bool board_check_valid_placement(Board * b, Piece * p);
+bool piece_contains_point(Piece * piece, Point * test_point);
 
 #endif /* PIECES_H */
 
