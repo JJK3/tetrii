@@ -1,9 +1,7 @@
-
-
 (define player<%>
   (interface ()
     refresh ;; block% -> void
-    take-piece
+    take-piece ;; tell the player they have a new piece
     message ;; string -> void
     ))
 
@@ -11,6 +9,7 @@
 (define main-frame 5)
 (define main-canvas 6)
 
+;; Human player with a GUI
 (define human-player%
   (class* object% (player<%>) ()
     (init-field board)
@@ -84,6 +83,7 @@
                          (send (send main-canvas get-dc) clear) ;refresh the canvas
                          (send main-canvas refresh)))
 
+;; An AI player that doesn't need a gui.
 (define ai-player%
   (class* object% (player<%>) ()
     (init-field board)
