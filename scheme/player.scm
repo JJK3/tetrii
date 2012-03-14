@@ -36,7 +36,7 @@
 
 (define BLOCK_SIZE 30) ;;the graphical size of each block
 
-;;the board painter
+;; The board painter
 (define painter (lambda (canvas dc)
                   (map 
                    (lambda (block)   
@@ -48,7 +48,7 @@
                            BLOCK_SIZE)) 
                    main-block-list)))
 
-;;my own version of frame% that contains key-listeners
+;; My own version of frame% that contains key-listeners
 (define my-frame%
   (class frame% () ()
     (field (score-box null))
@@ -75,13 +75,15 @@
                  (send score-box stretchable-width #t))))
     (super-new)))
 
-;;refresh-canvas : void -> void 
-;;helper function to clear and refresh the canvas
+;; Helper function to clear and refresh the canvas
+;; refresh-canvas : void -> void 
 (define refresh-canvas (lambda (board) 
                          (set! main-block-list (append (get-field block-list (get-field piece board) )
                                                        (get-field block-list board)))
                          (send (send main-canvas get-dc) clear) ;refresh the canvas
                          (send main-canvas refresh)))
+
+
 
 ;; An AI player that doesn't need a gui.
 (define ai-player%
