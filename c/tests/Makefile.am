@@ -1,4 +1,5 @@
 ## Process this file with automake to produce Makefile.in
+CFLAGS=-std=c99
 
 TESTS = pieces_test
 check_PROGRAMS = pieces_test

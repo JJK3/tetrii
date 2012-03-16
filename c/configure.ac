@@ -30,6 +30,7 @@ AM_PATH_CHECK()
 # Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([stdlib.h])
+AM_PATH_GTK_2_0(2.2.0,,AC_MSG_ERROR(mypkgname 0.1 needs GTK+ 2.2.0))
 
 # Checks for typedefs, structures, and compiler characteristics.
 
