@@ -4,8 +4,9 @@
 #include <stdlib.h>
 #include "pieces.h"
 
-/** Point functions */
+const char * COLORS[5] = {"#BB0000", "blue", "#2dd400", "#ff950c", "#2ea4ff"};
 
+/** Point functions */
 bool point_equals(Point *p1, Point *p2)
 {
 	return p1 != NULL && p2 != NULL &&
@@ -29,9 +30,9 @@ Point * point_copy (Point * old_point)
 	Point *p = malloc (sizeof (Point));
 	p->x = old_point->x;
 	p->y = old_point->y;
+	p->color = old_point->color;
 	return p;
 };
-
 
 void point_free (Point * p)
 {
@@ -53,7 +54,7 @@ void point_free (Point * p)
 Piece * line(int x, int y)
 {
 	int blocks[4][2] = {{0,-1}, {0,0}, {0,1}, {0,2}};
-	return piece_create(x, y, blocks);
+	return piece_create(x, y, blocks, "blue");
 };
 
 /**
@@ -64,7 +65,7 @@ Piece * line(int x, int y)
 Piece * square(int x, int y)
 {
 	int blocks[4][2] = {{0,0}, {1,0}, {1,1}, {0,1}};
-	return piece_create(x, y, blocks);
+	return piece_create(x, y, blocks, "#BB0000");
 };
 
 /**
@@ -75,7 +76,7 @@ Piece * square(int x, int y)
 Piece * l_shape1(int x, int y)
 {
 	int blocks[4][2] = {{-1,0}, {0,0}, {1,0}, {1,1}};
-	return piece_create(x, y, blocks);
+	return piece_create(x, y, blocks, "#2dd400");
 };
 
 /**
@@ -86,7 +87,7 @@ Piece * l_shape1(int x, int y)
 Piece * l_shape2(int x, int y)
 {
 	int blocks[4][2] = {{-1,0}, {0,0}, {1,0}, {1,-1}};
-	return piece_create(x, y, blocks);
+	return piece_create(x, y, blocks, "#ff950c");
 };
 
 /**
@@ -97,7 +98,7 @@ Piece * l_shape2(int x, int y)
 Piece * n_shape1(int x, int y)
 {
 	int blocks[4][2] = {{-1,0}, {0,0}, {0,1}, {1,1}};
-	return piece_create(x, y, blocks);
+	return piece_create(x, y, blocks, "#2ea4ff");
 };
 
 /**
@@ -108,9 +109,8 @@ Piece * n_shape1(int x, int y)
 Piece * n_shape2(int x, int y)
 {
 	int blocks[4][2] = {{-1,0}, {0,0}, {0,-1}, {1,-1}};
-	return piece_create(x, y, blocks);
+	return piece_create(x, y, blocks, "#4b0063");
 };
-
 
 Piece * piece_create_random(int x, int y)
 {
@@ -123,13 +123,14 @@ Piece * piece_create_random(int x, int y)
 }
 
 /** Piece constructor */
-Piece * piece_create(int center_x, int center_y, int coords[4][2])
+Piece * piece_create(int center_x, int center_y, int coords[4][2], char * color)
 {
 	Point ** blocks = (Point **) malloc(sizeof(Point)*4);
-	blocks[0] = point_create(coords[0][0], coords[0][1]);
-	blocks[1] = point_create(coords[1][0], coords[1][1]);
-	blocks[2] = point_create(coords[2][0], coords[2][1]);
-	blocks[3] = point_create(coords[3][0], coords[3][1]);
+	for (int i=0; i<4; i++){
+		Point * new_point = point_create(coords[i][0], coords[i][1]);
+		blocks[i] = new_point;
+		new_point->color = color;
+	}
 	Point * center = point_create(center_x, center_y);
 	Piece * p = malloc (sizeof(Piece));
 	p->center = center;
@@ -140,10 +141,9 @@ Piece * piece_create(int center_x, int center_y, int coords[4][2])
 Piece * piece_copy(Piece * old_piece)
 {
 	Point ** blocks = (Point **) malloc(sizeof(Point)*4);
-	blocks[0] = point_copy(old_piece->blocks[0]);
-	blocks[1] = point_copy(old_piece->blocks[1]);
-	blocks[2] = point_copy(old_piece->blocks[2]);
-	blocks[3] = point_copy(old_piece->blocks[3]);
+	for (int i=0; i<4; i++) {
+		blocks[i] = point_copy(old_piece->blocks[i]);
+	}
 	Point * center = point_create(old_piece->center->x, old_piece->center->y);
 	Piece * p = malloc (sizeof(Piece));
 	p->center = center;
@@ -168,44 +168,14 @@ void piece_down(Piece* p)
 /* Mutate a piece by moving left 1 */
 void piece_left(Piece *p)
 {
-	if (piece_leftmost_block(p) + p->center->x > 0){
-		p->center->x--;
-	}
+	p->center->x--;
 };
 
 /* Mutate a piece by moving right 1 */
-void piece_right(Piece *p, Board * b)
+void piece_right(Piece *p)
 {
-	if (piece_rightmost_block(p) + p->center->x < b->width-1){
-		p->center->x++;
-	}
+	p->center->x++;
 };
-
-/** relative to the center, how far is the leftmost block? */
-int piece_leftmost_block(Piece * p)
-{
-	int min = 100;
-	for (int i=0; i<4; i++) {
-		int x = p->blocks[i]->x;
-		if (x < min){
-			min = x;
-		}
-	}
-	return min;
-}
-
-/** relative to the center, how far is the rightmost block? */
-int piece_rightmost_block(Piece * p)
-{
-	int max = 0;
-	for (int i=0; i<4; i++) {
-		int x = p->blocks[i]->x;
-		if (x > max){
-			max = x;
-		}
-	}
-	return max;
-}
 
 /* Mutate a piece by rotating it clockwise around (0,0) */
 void piece_rotate_clockwise(Piece *p)
@@ -229,19 +199,6 @@ void piece_rotate_counter_clockwise(Piece *p)
 	}
 };
 
-/** Test whether the given point exists in this piece. */
-bool piece_contains_point(Piece * piece, Point * test_point){
-	Point * relative_point = point_create(test_point->x - piece->center->x,
-										  test_point->y - piece->center->y);
-	for (int i=0; i<4; i++)	{
-		Point * current_point = piece->blocks[i];
-		if (point_equals(current_point, relative_point)) {
-			return true;
-		}
-	}
-	return false;
-};
-
 bool piece_equals(Piece *p1, Piece *p2)
 {
 	if (p1 == NULL || p2 == NULL) {
@@ -255,55 +212,11 @@ bool piece_equals(Piece *p1, Piece *p2)
 		Point *point1 = p1->blocks[i];
 		Point *point2 = p2->blocks[i];
 		if (!point_equals(point1, point2)){ 
-			//printf("asd %i", point1);
 			return false;
 		}
 	}
 	return true;
 };
-
-
-
-
-/** A linked list of pieces. */
-LinkedList * linked_list_create()
-{
-	LinkedList *pl = malloc (sizeof (LinkedList));
-	pl->car = NULL;
-	pl->cdr = NULL;
-	return pl;
-};
-
-void linked_list_free(LinkedList * pl)
-{
-	free(pl->car);
-	if (pl->cdr != NULL) {
-		linked_list_free(pl->cdr);
-	}
-	free(pl);
-};
-
-LinkedList * linked_list_cons(LinkedList * list, void * element)
-{
-	LinkedList * new_list = linked_list_create();
-	new_list->car = element;
-	new_list->cdr = list;
-	return new_list;  
-};
-
-void linked_list_iterate(LinkedList * list, void (*iterator) (void *))
-{
-	if (list != NULL) {
-		LinkedList * current_list = list;
-		void * current = list->car;
-		while (current != NULL) {
-			(*iterator)(current);	
-			current_list = current_list->cdr;
-			current = current_list->car;
-		}
-	}
-};
-
 
 
 
@@ -317,9 +230,14 @@ Board * board_create()
 	b->height = HEIGHT;
 	b->width = WIDTH;
 	b->score = 0;
-	//  Point * p[10][10];
+	b->is_done = false;
 	//  b->placed_blocks = p;
 	b->current_piece = piece_create_random((b->width / 2), 1);
+	for (int x=0; x<b->width; x++){
+		for (int y=0; y<b->height; y++){
+			b->placed_blocks[x][y] = NULL;
+		}
+	}
 	return b;
 };
 
@@ -384,10 +302,9 @@ bool board_check_valid_placement(Board * b, Piece * p)
 {
 	for (int i=0; i<4; i++){
 		Point * current_point = p->blocks[i];
-		//blocks are relative to the center
 		int absolute_x = current_point->x + p->center->x; 
 		int absolute_y = current_point->y + p->center->y; 
-		if (absolute_x < 0 || absolute_x > b->width || absolute_y > b->height) {
+		if (absolute_x < 0 || absolute_x >= b->width || absolute_y >= b->height) {
 			return false;
 		}
 
@@ -420,15 +337,16 @@ void board_place_piece(Board * b, Piece * p)
 		Point * point = p->blocks[i];
 		int absolute_x = point->x + p->center->x; 
 		int absolute_y = point->y + p->center->y; 
-		b->placed_blocks[absolute_x][absolute_y] = point_create(absolute_x, absolute_y);
+		Point * new_point = point_create(absolute_x, absolute_y);
+		new_point->color = point->color;
+		b->placed_blocks[absolute_x][absolute_y] = new_point;
 	}
 }
 
 /** Remove a row from the board and push the remaining blocks down. */
 void board_remove_row(Board * b, int row)
 {
-	printf("Removing row %i", row);
-	// Remove the first row;
+	// Remove the row;
 	for (int x=0; x<b->width; x++) {
 		Point * p = b->placed_blocks[x][row];
 		point_free(p);
@@ -438,13 +356,33 @@ void board_remove_row(Board * b, int row)
 	// Move the other blocks down
 	for (int y=row; y>0; y--) {
 		for (int x=0; x<b->width; x++) {
-			b->placed_blocks[x][y] = b->placed_blocks[x][y-1];
+			Point * above = b->placed_blocks[x][y-1];
+			b->placed_blocks[x][y] = above;
+			if (above != NULL){
+				above->y = y;
+			}
 			b->placed_blocks[x][y-1] = NULL;
 		}
 	}
 }
 
-/** attempts to push the current piece down */
+void board_print(Board * b)
+{
+	for (int y=0; y<b->height; y++) {
+		for (int x=0; x<b->width; x++) {	
+			Point * p = b->placed_blocks[x][y];
+			if (p != NULL){
+				printf("X ");
+			} else {
+				printf(". ");
+			}
+		}
+		printf("\n");
+	}
+	printf("\n");
+}
+
+/** Attempts to push the current piece down */
 bool board_push_current_piece_down(Board * b)
 {
 	// First test if the current piece is already touching something.
@@ -467,6 +405,7 @@ bool board_push_current_piece_down(Board * b)
 				board_remove_row(b, y);
 			}
 		}
+		free(completed_rows);
 
 		// score the points
 		if (total_complete_rows == 1) {
@@ -478,9 +417,19 @@ bool board_push_current_piece_down(Board * b)
 		} else if (total_complete_rows == 4) {
 			b->score += 55;
 		}
+		if (total_complete_rows > 0){
+			printf("Score is %i\n", b->score);
+		}
 
-		piece_free(b->current_piece);
-		b->current_piece = piece_create_random((b->width / 2), 1);
+		//		board_print(b);
+		Piece * next_piece = piece_create_random((b->width / 2), 1);
+		if (board_check_valid_placement(b, next_piece)){
+			piece_free(b->current_piece);
+			b->current_piece = next_piece;						
+		} else {
+			piece_free(next_piece);
+			b->is_done = true;
+		}		
 	}
 	return result;
 }

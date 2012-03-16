@@ -1,4 +1,4 @@
-CFLAGS=-std=c99 -lm
+CFLAGS=-std=c99 -lm -lpthread
 
 lib_LTLIBRARIES = libtetris.la
 libtetris_la_SOURCES = pieces.c pieces.h 
