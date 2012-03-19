@@ -13,6 +13,7 @@ class Block
   def right!() @x += 1 end
   def to_s() "Block(#{@x},#{@y})" end
   def copy() Block.new(@x, @y, @color) end 
+  def add(other) Block.new(@x+other.x, @y+other.y, @color) end
   def ==(other)
     other.is_a?(Block) and other.x == @x and other.y == @y
   end
@@ -36,9 +37,7 @@ class Piece
   def to_s() "Piece(center:#{@center}, blocks:#{@blocks.map{|b| b.to_s}.join(", ")})" end
 
   #since blocks are relative to the center, get blocks with the real coords
-  def real_blocks
-    @blocks.map{|b| Block.new(b.x+center.x, b.y+center.y, @color) } 
-  end
+  def real_blocks() @blocks.map{|b| b.add(@center)} end
 
   def self.new_line(x, y)     creation_helper(x, y, [[0,-1], [0,0], [0,1], [0,2]], "blue") end
   def self.new_square(x, y)   creation_helper(x, y, [[0, 0], [1,0], [1,1], [0,1]], "#BB0000") end
@@ -70,7 +69,7 @@ end
 
 class Board
   attr_accessor :current_piece
-  attr_reader :blocks, :width, :height, :score
+  attr_reader :blocks, :width, :height, :score, :game_over
   
   def initialize(width, height)
     @width = width
@@ -78,6 +77,7 @@ class Board
     @blocks = []
     @score = 0
     @current_piece = Piece.new_random_piece((@width/2)-1, 1)
+    @game_over = false
   end
 
   def block_at(x, y)
@@ -150,17 +150,14 @@ class Board
       place_piece!(@current_piece) 
       complete_rows = find_completed_rows
       complete_rows.each{|row| remove_row(row) }
-      if complete_rows.size == 1
-        @score += 10
-      elsif complete_rows.size == 2
-        @score += 20
-      elsif complete_rows.size == 3
-        @score += 40
-      elsif complete_rows.size == 4
-        @score += 55
-      end
+      score_points = {0=>0, 1=>10, 2=>20, 3=>30, 4=>55}
+      @score += score_points[complete_rows.size]
       result = true
       @current_piece = Piece.new_random_piece((@width/2)-1, 1)
+      if not(check_valid_placement(@current_piece))
+        @game_over = true
+        puts "Game is over.  Final score:#{@score}"
+      end
     end
     mutate_if_valid{|p| p.down!}
     return result
