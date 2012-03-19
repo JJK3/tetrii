@@ -1,4 +1,4 @@
-// An individual block
+/** An individual block */
 class Block(var x: Int, var y: Int, val color: String) {
     def down = { y += 1 }
     def left = { x -= 1 }
@@ -32,7 +32,7 @@ object Piece {
     }
 }
 
-// A group of blocks
+/** A group of blocks */
 class Piece(var center: Block, var blocks: List[Block], val color: String) {
     def down = center.down
     def left = center.left
@@ -61,67 +61,62 @@ class Board(val width: Int, val height: Int) {
     var current_piece = Piece.new_random_piece((width / 2) - 1, 1)
 
     def block_at(x: Int, y: Int) = blocks.find { (b) => b.x == x && b.y == y }.getOrElse(null)
-    def row(y: Int) = (0.to(width - 1)).map { block_at(_, y) }
 
-    def is_row_complete(y: Int) = {
-        !row(y).contains(null)
-    }
+    def row(y: Int) = (0 to (width - 1)).map { block_at(_, y) }
+
+    def is_row_complete(y: Int) = !row(y).contains(null)
 
     override def toString = {
         var s = ""
-        (0.to(height - 1)).foreach { y =>
+        (0 to (height - 1)).foreach { y =>
             row(y).foreach { b => s += (if (b == null) " ." else " X") }
             s += "\n"
         }
         s
     }
 
-    // Get the list of completed rows; the indexes of each row
-    def find_completed_rows = {
-        (0.to(height - 1)).filter { is_row_complete(_) }
-    }
+    /** Get the list of completed rows; the indexes of each row */
+    def find_completed_rows = (0 to (height - 1)).filter { is_row_complete(_) }
 
-    def check_valid_placement(piece: Piece) = {
-        piece.real_blocks.forall { b =>
-            b.x >= 0 && b.x < width && b.y >= 0 && b.y < height && block_at(b.x, b.y) == null
-        }
-    }
+    /** Is the given block within bounds? */
+    def is_block_valid(b: Block) =
+        b.x >= 0 && b.x < width && b.y >= 0 && b.y < height && block_at(b.x, b.y) == null
+
+    /** Is the given piece within bounds? */
+    def is_piece_valid(piece: Piece) = piece.real_blocks.forall { is_block_valid(_) }
 
     def place_piece(piece: Piece) = {
-        if (!check_valid_placement(piece)) {
-            throw new IllegalArgumentException("Cannot place a piece that is invalid. //{piece}")
+        if (!is_piece_valid(piece)) {
+            throw new IllegalArgumentException("Cannot place a piece that is invalid. " + piece)
         }
         piece.real_blocks.foreach { blocks ::= _ }
-
     }
 
     def remove_row(y: Int) = {
-        System.out.println("removing row //{y}")
+        System.out.println("removing row " + y)
         blocks.remove { row(y).contains(_) }
-        (0.to(y - 1)).foreach {
+        (0 to (y - 1)).foreach {
             row(_).foreach { b => if (b != null) { b.down } }
         }
     }
 
-    // Test whether the given operation results in a valid piece placement.
+    /** Test whether the given operation results in a valid piece placement. */
     def is_operation_valid(piece: Piece, block: (Piece) => Unit): Boolean = {
         val test_piece = piece.copy
         block(test_piece)
-        return check_valid_placement(test_piece)
+        return is_piece_valid(test_piece)
     }
 
-    // Mutate the current piece, but only if the operation is valid
+    /** Mutate the current piece, but only if the operation is valid */
     def mutate_if_valid(block: (Piece) => Unit) = {
         if (is_operation_valid(current_piece, (b: Piece) => block(b))) {
             block(current_piece)
         }
     }
 
-    def is_piece_on_bottom(piece: Piece) = {
-        !is_operation_valid(piece, (p: Piece) => p.down)
-    }
+    def is_piece_on_bottom(piece: Piece) = !is_operation_valid(piece, (p: Piece) => p.down)
 
-    // Returns whether the piece was on the bottom after the push
+    /** Returns whether the piece was on the bottom after the push */
     def push_current_piece_down: Boolean = {
         var result = false
         if (is_piece_on_bottom(current_piece)) {
