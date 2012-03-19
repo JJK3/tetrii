@@ -65,7 +65,8 @@ Piece * line(int x, int y)
 Piece * square(int x, int y)
 {
 	int blocks[4][2] = {{0,0}, {1,0}, {1,1}, {0,1}};
-	return piece_create(x, y, blocks, "#BB0000");
+	return piece_create(x, y, blocks, 
+"#BB0000");
 };
 
 /**
@@ -232,7 +233,7 @@ Board * board_create()
 	b->score = 0;
 	b->is_done = false;
 	//  b->placed_blocks = p;
-	b->current_piece = piece_create_random((b->width / 2), 1);
+	b->current_piece = piece_create_random((b->width / 2), 2);
 	for (int x=0; x<b->width; x++){
 		for (int y=0; y<b->height; y++){
 			b->placed_blocks[x][y] = NULL;
@@ -422,7 +423,7 @@ bool board_push_current_piece_down(Board * b)
 		}
 
 		//		board_print(b);
-		Piece * next_piece = piece_create_random((b->width / 2), 1);
+		Piece * next_piece = piece_create_random((b->width / 2), 2);
 		if (board_check_valid_placement(b, next_piece)){
 			piece_free(b->current_piece);
 			b->current_piece = next_piece;						

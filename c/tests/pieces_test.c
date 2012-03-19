@@ -72,7 +72,7 @@ START_TEST (piece_test_move)
 	fail_unless (piece_equals(p1, p2), "the same piece was not equal");
 	piece_left(p1);
 	fail_if (piece_equals(p1, p2), "different pieces should not be equal");
-	piece_right(p1, board);
+	piece_right(p1);
 	fail_unless (piece_equals(p1, p2), "pieces should be equal after move");
 
 	piece_free(p1);
@@ -87,19 +87,19 @@ START_TEST (piece_test_rotate_clockwise)
 
 	/* Rotate one time. */
 	int blocks[4][2] = {{0,-1}, {0,0}, {0,1}, {-1,1}};
-	Piece * rotate_1_time = piece_create(3, 3, blocks);
+	Piece * rotate_1_time = piece_create(3, 3, blocks, NULL);
 	piece_rotate_clockwise(p1);
 	fail_unless (piece_equals(p1, rotate_1_time), "pieces should be equal after 1 rotation");
 	
 	/* Rotate a second time. */
 	int blocks2[4][2] = {{1,0}, {0,0}, {-1,0}, {-1,-1}};
-	Piece * rotate_2_time = piece_create(3, 3, blocks2);
+	Piece * rotate_2_time = piece_create(3, 3, blocks2, NULL);
 	piece_rotate_clockwise(p1);
 	fail_unless (piece_equals(p1, rotate_2_time), "pieces should be equal after 2 rotations");
 	
 	/* Rotate a third time. */
 	int blocks3[4][2] = {{0,1}, {0,0}, {0,-1}, {1,-1}};
-	Piece * rotate_3_time = piece_create(3, 3, blocks3);
+	Piece * rotate_3_time = piece_create(3, 3, blocks3, NULL);
 	piece_rotate_clockwise(p1);
 	fail_unless (piece_equals(p1, rotate_3_time), "pieces should be equal after 3 rotations");
 
@@ -122,19 +122,19 @@ START_TEST (piece_test_rotate_counter_clockwise)
 
 	/* Rotate one time. */
 	int blocks3[4][2] = {{0,1}, {0,0}, {0,-1}, {1,-1}};
-	Piece * rotate_1_time = piece_create(3, 3, blocks3);
+	Piece * rotate_1_time = piece_create(3, 3, blocks3, NULL);
 	piece_rotate_counter_clockwise(p1);
 	fail_unless (piece_equals(p1, rotate_1_time), "pieces should be equal after 1 rotation");
 
 	/* Rotate a second time. */
 	int blocks2[4][2] = {{1,0}, {0,0}, {-1,0}, {-1,-1}};
-	Piece * rotate_2_time = piece_create(3, 3, blocks2);
+	Piece * rotate_2_time = piece_create(3, 3, blocks2, NULL);
 	piece_rotate_counter_clockwise(p1);
 	fail_unless (piece_equals(p1, rotate_2_time), "pieces should be equal after 2 rotations");
 
 	/* Rotate a third time. */
 	int blocks[4][2] = {{0,-1}, {0,0}, {0,1}, {-1,1}};
-	Piece * rotate_3_time = piece_create(3, 3, blocks);
+	Piece * rotate_3_time = piece_create(3, 3, blocks, NULL);
 	piece_rotate_counter_clockwise(p1);
 	fail_unless (piece_equals(p1, rotate_3_time), "pieces should be equal after 3 rotations");
 
@@ -212,7 +212,7 @@ START_TEST (move_piece_test)
 	for (int i=0; i<HEIGHT; i++){
 		fail_unless (board_push_current_piece_down(b), "Piece should be able to move down. ");  
 	}
-	fail_unless (b->current_piece->center->y == 1, "The piece should be a new piece");  
+	fail_unless (b->current_piece->center->y == 3, "The piece should be a new piece");  
 }
 END_TEST
 

@@ -123,6 +123,11 @@ board_redraw(GtkWidget *widget, Board * b)
 			}
 		}
 	}
+	char score_string[50];
+	sprintf(score_string, "Score: %i", b->score);
+	GdkFont * font = gdk_font_load("-*-helvetica-bold-r-normal--*-140-*-*-*-*-iso8859-1");
+	gdk_draw_string(this.pixMap, font, widget->style->black_gc, 100, 20, score_string);
+
 	gtk_widget_queue_draw_area (widget,
 								0, 0,
 								widget->allocation.width, widget->allocation.height);
