@@ -1,9 +1,8 @@
-This project is to create different versions of Tetris in several
+This project is many versions of Tetris in several different
 languages. 
 
-Mainly, the intent for this project is to just be a nice way to
-familiarize myself with different languages.  Each implementation
-will be written within the paradigm of that language.  Meaning that, a
-program written in C, will be written with a C mentalit.  While a
-program written in lisp will be written in a lisp mindset using lisp
-ideas.
+Mainly, the intent is to just be a nice way to familiarize myself with
+different languages.  Each implementation will be written within the
+paradigm of that language.  Meaning that, a program written in C, will
+be written with a C mentalit.  While a program written in lisp will be
+written in a lisp mindset using lisp ideas.
