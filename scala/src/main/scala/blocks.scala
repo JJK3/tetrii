@@ -1,12 +1,11 @@
 import scala.util.Random
 
 /** An individual block */
-class Block(var x: Int, var y: Int, val color: String) {
-    def down = { y += 1 }
-    def left = { x -= 1 }
-    def right = { x += 1 }
+class Block(val x: Int, val y: Int, val color: String) {
+    def down = new Block(x, y + 1, color)
+    def left = new Block(x - 1, y, color)
+    def right = new Block(x + 1, y, color)
     def add(other: Block) = new Block(x + other.x, y + other.y, color)
-    def copy = { new Block(x, y, color) }
     override def toString = "Block(" + x + "," + y + ")"
 }
 
@@ -26,27 +25,25 @@ object Piece {
     }
 
     private def creation_helper(x: Int, y: Int, block_coords: List[(Int, Int)], color: String): Piece = {
-        val blocks = block_coords.map { (xy) => new Block(xy._1, xy._2, color) }
+        val blocks = block_coords.map { (xy) => new Block(xy._1 + x, xy._2 + y, color) }
         return new Piece(new Block(x, y, color), blocks, color)
     }
 }
 
 /** A group of blocks */
-class Piece(var center: Block, var blocks: List[Block], val color: String) {
-    def down = center.down
-    def left = center.left
-    def right = center.right
-    def rotate_clockwise = blocks.foreach { (b) =>
-        var tmp_x = b.x
-        b.x = -b.y
-        b.y = tmp_x
-    }
+class Piece(val center: Block, val blocks: List[Block], val color: String) {
+    def down = new Piece(center.down, blocks.map{_.down}, color)
+    def left = new Piece(center.left, blocks.map{_.left}, color)
+    def right = new Piece(center.right, blocks.map{_.right}, color)
+    def rotate_clockwise = new Piece(center, 
+							    	 blocks.map { (b) =>
+								    	val relative_xy = (b.x - center.x, b.y - center.y)
+								        val x = center.x - relative_xy._2
+								        val y = center.y + relative_xy._1
+								        new Block(x, y, color)
+							    	 }, color);
+    
     override def toString = "Piece(center:" + center + ", blocks:" + blocks.map { _.toString }.mkString(", ") + ")"
-
-    /** since blocks are relative to the center, get blocks with the real coords */
-    def real_blocks = blocks.map { _.add(center) }
-
-    def copy = new Piece(center.copy, blocks.map { _.copy }, color)
 }
 
 class Board(val width: Int, val height: Int) {
@@ -79,36 +76,26 @@ class Board(val width: Int, val height: Int) {
         b.x >= 0 && b.x < width && b.y >= 0 && b.y < height && block_at(b.x, b.y).isEmpty
 
     /** Is the given piece within bounds? */
-    def is_piece_valid(piece: Piece) = piece.real_blocks.forall { is_block_valid(_) }
+    def is_piece_valid(piece: Piece) = piece.blocks.forall { is_block_valid(_) }
 
     def place_piece(piece: Piece) = {
         require(!is_piece_valid(piece), "Cannot place a piece that is invalid. " + piece)
-        piece.real_blocks.foreach { blocks ::= _ }
+        piece.blocks.foreach { blocks ::= _ }
     }
     
     def remove_row(y: Int) = {
         System.out.println("removing row " + y)
         blocks.remove { row(y).contains(_) }
-        (0 to (y - 1)).foreach {
-            row(_).filter { _.isDefined }.foreach { _.get.down }
+        blocks = blocks.map{ b => 
+        	if (b.y < y) {
+        		b.down
+        	} else {
+        		b
+        	}
         }
     }
 
-    /** Test whether the given operation results in a valid piece placement. */
-    def is_operation_valid(piece: Piece)(block: (Piece) => Unit): Boolean = {
-        val test_piece = piece.copy
-        block(test_piece)
-        return is_piece_valid(test_piece)
-    }
-
-    /** Mutate the current piece, but only if the operation is valid */
-    def mutate_if_valid(block: Piece => Unit) = {
-        if (is_operation_valid(current_piece) { block(_) }) {
-            block(current_piece)
-        }
-    }
-
-    def is_piece_on_bottom(piece: Piece) = !is_operation_valid(piece) { _.down }
+    def is_piece_on_bottom(piece: Piece) = !is_piece_valid(piece.down)
 
     /** Returns whether the piece was on the bottom after the push */
     def push_current_piece_down: Boolean = {
@@ -117,12 +104,12 @@ class Board(val width: Int, val height: Int) {
             place_piece(current_piece)
             val complete_rows = find_completed_rows
             complete_rows.foreach { remove_row(_) }
-            val score_points = Map[Int, Int](0 -> 0, 1 -> 10, 2 -> 20, 3 -> 30, 4 -> 55)
+            val score_points = Map[Int, Int](0 -> 0, 1 -> 10, 2 -> 25, 3 -> 40, 4 -> 55)
             score += score_points(complete_rows.size)
             result = true
             current_piece = Piece.new_random_piece((width / 2) - 1, 1)
         } else {
-            current_piece.down
+            current_piece = current_piece.down
         }
         return result
     }
