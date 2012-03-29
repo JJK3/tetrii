@@ -4,7 +4,14 @@ import com.google.common.base.Function;
 
 public class Block {
 	public enum Color {
-		RED, ORANGE, LIGHT_BLUE, DARK_BLUE, GREEN, YELLOW
+		RED(0xBB0000), ORANGE(0xff950c), LIGHT_BLUE(0x2ea4ff), DARK_BLUE(0x0000BB), GREEN(0x2dd400), VIOLET(
+				0x4b0063);
+
+		int colorHexValue;
+
+		private Color(int color) {
+			this.colorHexValue = color;
+		}
 	}
 
 	public final int x, y;

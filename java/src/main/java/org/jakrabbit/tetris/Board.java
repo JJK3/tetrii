@@ -13,6 +13,7 @@ public class Board {
 	private BlockGroup currentPiece;
 	private final int width, height;
 	private int score = 0;
+	private boolean isGameDone = false;
 
 	public Board(int width, int height) {
 		this.width = width;
@@ -22,6 +23,26 @@ public class Board {
 
 	public int getScore() {
 		return score;
+	}
+
+	public List<Block> getPlacedBlocks() {
+		return placedBlocks;
+	}
+
+	public BlockGroup getCurrentPiece() {
+		return currentPiece;
+	}
+
+	public int getWidth() {
+		return width;
+	}
+
+	public int getHeight() {
+		return height;
+	}
+
+	public boolean isGameDone() {
+		return isGameDone;
 	}
 
 	/**
@@ -95,16 +116,38 @@ public class Board {
 	public void removeRow(final int y) {
 		placedBlocks.removeAll(getRow(y));
 		// push blocks above y, down
-		placedBlocks = Lists.transform(placedBlocks, new Function<Block, Block>() {
-			@Override
-			public Block apply(Block old) {
-				return (old.y < y) ? old.down() : old;
-			}
-		});
+		placedBlocks = new ArrayList<Block>(Lists.transform(placedBlocks,
+				new Function<Block, Block>() {
+					@Override
+					public Block apply(Block old) {
+						return (old.y < y) ? old.down() : old;
+					}
+				}));
 	}
 
 	public boolean isPieceOnBottom(BlockGroup bg) {
-		return isBlockGroupValid(bg.down());
+		return isBlockGroupValid(bg) && !isBlockGroupValid(bg.down());
+	}
+
+	public void currentPieceRotate() {
+		BlockGroup bg = getCurrentPiece().rotateClockwise();
+		if (isBlockGroupValid(bg)) {
+			currentPiece = bg;
+		}
+	}
+
+	public void currentPieceLeft() {
+		BlockGroup bg = getCurrentPiece().left();
+		if (isBlockGroupValid(bg)) {
+			currentPiece = bg;
+		}
+	}
+
+	public void currentPieceRight() {
+		BlockGroup bg = getCurrentPiece().right();
+		if (isBlockGroupValid(bg)) {
+			currentPiece = bg;
+		}
 	}
 
 	public boolean pushCurrentPieceDown() {
@@ -127,6 +170,9 @@ public class Board {
 			return true;
 		} else {
 			currentPiece = currentPiece.down();
+		}
+		if (!isBlockGroupValid(currentPiece)) {
+			isGameDone = true;
 		}
 		return false;
 	}

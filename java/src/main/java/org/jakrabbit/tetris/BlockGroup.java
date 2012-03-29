@@ -88,7 +88,7 @@ public class BlockGroup {
 
 	public static BlockGroup newNShape2(int x, int y) {
 		return creationHelper(x, y, new int[][] { { -1, 0 }, { 0, 0 }, { 0, -1 }, { 1, -1 } },
-				Block.Color.YELLOW);
+				Block.Color.VIOLET);
 	}
 
 	public static BlockGroup newRandom(int x, int y) {

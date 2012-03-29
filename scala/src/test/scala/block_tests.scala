@@ -33,6 +33,6 @@ class BlockTest extends AssertionsForJUnit {
 
     @Test def testBoard = {
         val b = new Board(10, 20)
-        
+
     }
 }
