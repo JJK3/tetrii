@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script type="text/javascript" src="blocks.js" ></script>
+		<script type="text/javascript" src="block_tests.js" ></script>
+	</head>
+	<body>
+		<canvas id="tetrisCanvas" width="300" height="600"></canvas>
+		<div id="test_output"></div>
+		<script type="text/javascript">
+            // Run Tests
+            var results = "";
+            results += run_test_suite(pieceTests);
+            results += run_test_suite(boardTests);
+            document.getElementById("test_output").innerHTML = results;
+            
+            // Game GUI
+            var canvas = document.getElementById("tetrisCanvas");
+            var context = canvas.getContext('2d');
+            var block_size = 30;
+            var board = new Board(10, 20);
+            canvas.width = (board.width * block_size) + 2;
+            canvas.height = (board.height * block_size) + 2;
+            
+            function draw_block(b) {
+                context.fillStyle = b.color;
+                context.fillRect((b.x * block_size) + 1, (b.y * block_size) + 1, block_size, block_size);
+                context.strokeStyle = "black";
+                context.strokeRect((b.x * block_size) + 1, (b.y * block_size)+1, block_size, block_size);
+            }
+            
+            function draw_board(board) {
+                canvas.width = canvas.width;
+                context.strokeStyle = "black";
+                context.strokeRect(0,0,canvas.width, canvas.height);
+                for (var i=0; i< board.placed_blocks.length; i++) {
+                    draw_block(board.placed_blocks[i]);
+                }
+                for (var i=0; i< board.current_piece.blocks.length; i++) {
+                    draw_block(board.current_piece.blocks[i])
+                }
+            }
+            
+            function onKeyDown(event) {
+                if (event.keyCode == 32){
+                    // Spacebar was pressed 
+                    while (!board.push_current_piece_down()){}
+                } else if (event.keyCode == 37){
+                    // Left arrow was pressed
+                    board.set_current_piece(board.current_piece.left());
+                } else if (event.keyCode == 38){
+                    // Up arrow was pressed
+                    board.set_current_piece(board.current_piece.rotate_clockwise());
+                } else if (event.keyCode == 39){
+                    // Right arrow was pressed
+                    board.set_current_piece(board.current_piece.right());
+                } else if (event.keyCode == 40){
+                    // Down arrow was pressed
+                    board.push_current_piece_down();
+                }				
+                draw_board(board);
+            }			
+            
+            draw_board(board);
+            window.addEventListener('keydown',onKeyDown,true);
+            setInterval(function(){ 
+                board.push_current_piece_down();
+                draw_board(board);
+            }, 1000);
+		</script>
+	</body>
+</html>
