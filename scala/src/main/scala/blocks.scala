@@ -52,6 +52,7 @@ class Board(val width: Int, val height: Int) {
 
     def block_at(x: Int, y: Int) = blocks.find { (b) => b.x == x && b.y == y }
 
+    /** Get the list of blocks that correspond to the given row. */
     def row(y: Int) = (0 to (width - 1)).map { block_at(_, y) }
 
     def is_row_complete(y: Int) = row(y).forall { _.isDefined }
@@ -73,13 +74,7 @@ class Board(val width: Int, val height: Int) {
 
     def remove_row(y: Int) = {
         blocks = blocks.remove { _.y == y }
-        blocks = blocks.map { b =>
-            if (b.y < y) {
-                b.down
-            } else {
-                b
-            }
-        }
+        blocks = blocks.map { b => if (b.y < y) b.down else b }
     }
 
     def is_piece_on_bottom(piece: Piece) = !is_piece_valid(piece.down)
