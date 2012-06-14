@@ -4,8 +4,7 @@ require "test/unit"
 class BlockTest < Test::Unit::TestCase
  
   def test_block
-    b = Block.new(0,0, "red")
-    b.down!
+    b = Block.new(0,0, "red").down
     assert_equal(1, b.y)
   end
 
@@ -13,7 +12,7 @@ class BlockTest < Test::Unit::TestCase
     b = Block.new(0,0, "red")
     p = Piece.new_line(0, 0)
     assert_equal(p.real_blocks, [[0,-1], [0,0], [0,1], [0,2]].map{|x,y| Block.new(x,y, "red")} )
-    p.rotate_clockwise!
+    p = p.rotate_clockwise
     assert_equal(p.real_blocks, [[1,0], [0,0], [-1,0], [-2,0]].map{|x,y| Block.new(x,y, "red")} )
   end
 
@@ -29,7 +28,7 @@ class BlockTest < Test::Unit::TestCase
   def test_push_down
     b = Board.new(10, 20)
     b.current_piece = Piece.new_line(5, 1)
-    b.current_piece.rotate_clockwise!
+    b.current_piece = b.current_piece.rotate_clockwise
     (1..18).each{|y|
       b.push_current_piece_down!
     }
