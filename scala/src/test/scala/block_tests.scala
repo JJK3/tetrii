@@ -5,13 +5,14 @@ import scala.collection.mutable.ListBuffer
 import org.junit.Assert._
 import org.junit.Test
 import org.junit.Before
+import java.awt.Color
 
 class BlockTest extends AssertionsForJUnit {
     @Test def testBlock = {
-        var b = new Block(1, 1, "red")
+        var b = new Block(1, 1, Color.red)
         b = b.down
         assertEquals(2, b.y)
-        var b2 = new Block(2, 3, "red")
+        var b2 = new Block(2, 3, Color.red)
         var b3 = b.add(b2);
         assertEquals(3, b3.x)
         assertEquals(5, b3.y)

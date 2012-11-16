@@ -63,9 +63,13 @@
             
             draw_board(board);
             window.addEventListener('keydown',onKeyDown,true);
-            setInterval(function(){ 
-                board.push_current_piece_down();
-                draw_board(board);
+            var intervalId = setInterval(function(){ 
+				if (board.is_game_done){
+   	    			clearInterval(intervalId);
+				} else {
+	 			    board.push_current_piece_down();
+                    draw_board(board);
+                }
             }, 1000);
 		</script>
 	</body>

@@ -15,13 +15,15 @@ object Tetris {
         main.setVisible(true);
         val pushDown = new Thread() {
             override def run() {
-                var sleepTime = 1000
                 while (!canvas.board.is_game_done) {
                     try {
-                        Thread.sleep(sleepTime);
-                        sleepTime -= 10
-                        canvas.board.push_current_piece_down()
-                        canvas.repaint();
+					    var sleepTime = 1000 - (canvas.board.score * 10)
+					    if (sleepTime < 100){ 
+						  sleepTime = 100
+						}						  
+                        Thread.sleep(sleepTime)
+   					    canvas.board.push_current_piece_down()
+                        canvas.repaint()
                     } catch {
                         case e: InterruptedException => Unit
                     }
