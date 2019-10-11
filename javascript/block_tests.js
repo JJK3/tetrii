@@ -1,7 +1,7 @@
-function assert_not_null(obj, message) {
+function assertNotNull(obj, message) {
 	message = message ? message : ""
 	message = "Assertion Error: object was null " + message
-	if (obj == null || !obj){
+	if (obj == null || !obj) {
 		throw message;
 	}
 }
@@ -9,20 +9,21 @@ function assert_not_null(obj, message) {
 function assert(bool, message) {
 	message = message ? message : ""
 	message = "Assertion Error: " + message
-	if (!bool){
+	if (!bool) {
 		throw message;
 	}
 }
 
-function array_equal(arr1, arr2) {
-	if (arr1.length != arr2.length) return false;
-	for (var i=0; i<arr1.length; i++) {
-		if (arr1[i] instanceof(Array)) {
-			if (!array_equal(arr1[i], arr2[i])) {
+function arrayEqual(arr1, arr2) {
+	if (arr1.length != arr2.length)
+		return false;
+	for ( var i = 0; i < arr1.length; i++) {
+		if (arr1[i] instanceof (Array)) {
+			if (!arrayEqual(arr1[i], arr2[i])) {
 				return false;
 			}
 		} else {
-			if (arr1[i] != arr2[i]){
+			if (arr1[i] != arr2[i]) {
 				return false;
 			}
 		}
@@ -30,127 +31,133 @@ function array_equal(arr1, arr2) {
 	return true;
 }
 
-function assert_equal(expected, actual, message) {
+function assertEqual(expected, actual, message) {
 	message = message ? message : ""
-	message = "Assertion Error.  Expected " + expected + " but was " + actual + ". " + message
-	if (expected instanceof(Array)) {
-		if (!array_equal(expected, actual)){
+	message = "Assertion Error.  Expected " + expected + " but was " + actual
+			+ ". " + message
+	if (expected instanceof (Array)) {
+		if (!arrayEqual(expected, actual)) {
 			throw message;
 		}
-	} else if (expected != actual){
+	} else if (expected != actual) {
 		throw message;
 	}
 }
 
-function assert_piece(expected_coords, actual_piece, message) {
+function assertPiece(expected_coords, actual_piece, message) {
 	message = message ? message : ""
 	var real_coords = [];
-	for (var i=0; i<actual_piece.blocks.length; i++) {
+	for ( var i = 0; i < actual_piece.blocks.length; i++) {
 		var b = actual_piece.blocks[i];
 		real_coords.push([b.x, b.y]);
 	}
-	message = "Assertion Error.  Expected " + expected_coords + " but was " + real_coords + ". " + message
-	if (!array_equal(expected_coords, real_coords)){
+	message = "Assertion Error.  Expected " + expected_coords + " but was "
+			+ real_coords + ". " + message
+	if (!arrayEqual(expected_coords, real_coords)) {
 		throw message;
 	}
 }
-
 
 function test(testFunction) {
 	try {
 		testFunction();
-	} catch (err){
+	} catch (err) {
 		return err;
 	}
 	return null;
 }
 
-function run_test_suite(suite) {
+function runTestSuite(suite) {
 	var errors = {}
 	var errorCount = 0
 	var result = ""
 	var total_tests = 0;
-	for (var test_name in suite.tests) {
+	for ( var test_name in suite.tests) {
 		total_tests++;
 		var test_result = test(suite.tests[test_name])
-		if (test_result != null){
+		if (test_result != null) {
 			errors[test_name] = test_result;
 			errorCount++;
 		}
 	}
-	for (var erredTest in errors) {
+	for ( var erredTest in errors) {
 		result += erredTest + " -> " + errors[erredTest] + "<br/>";
 	}
 	result += "<br/>";
 	var passing_tests = total_tests - errorCount;
 	var percent_passing = 100.0 * passing_tests / total_tests;
-	result += suite.suite_name + ": " + passing_tests + "/" + total_tests + " (" + percent_passing + "%) tests passed"
+	result += suite.suite_name + ": " + passing_tests + "/" + total_tests
+			+ " (" + percent_passing + "%) tests passed"
 	return result;
 }
 
-
 pieceTests = {
 	suite_name : "Piece Tests",
-	tests :  {
-		"creation test" : function(){
-			assert_not_null(line(1, 2), "line null test");
-			assert_not_null(square(1, 2), "square null test");
-			assert_not_null(l_shape1(1, 2), "lshape1 null test");
-			assert_not_null(l_shape2(1, 2), "lshape2 null test");
-			assert_not_null(n_shape1(1, 2), "nshape1 null test");
-			assert_not_null(n_shape1(1, 2), "nshape2 null test");
-			assert_not_null(line(1, 2).blocks[1], "line.blocks null test");
+	tests : {
+		"creation test" : function() {
+			assertNotNull(line.move(1, 2), "line null test");
+			assertNotNull(square.move(1, 2), "square null test");
+			assertNotNull(l_shape1.move(1, 2), "lshape1 null test");
+			assertNotNull(l_shape2.move(1, 2), "lshape2 null test");
+			assertNotNull(n_shape1.move(1, 2), "nshape1 null test");
+			assertNotNull(n_shape1.move(1, 2), "nshape2 null test");
+			assertNotNull(line.move(1, 2).blocks[1], "line.blocks null test");
 		},
-		"piece move test" : function(){
-			assert_equal(3, line(1, 2).down().center.y, "down piece test");
-			assert_equal(4, line(1, 2).down().blocks[2].y, "down piece test");
-			assert_equal(0, line(1, 2).left().center.x, "left piece test");
-			assert_equal(0, line(1, 2).left().blocks[2].x, "left piece test");
-			assert_equal(2, line(1, 2).right().center.x, "left piece test");
+		"piece move test" : function() {
+			assertEqual(3, line.move(1, 2).move(0, 1).blocks[1].y,
+					"down piece test");
+			assertEqual(4, line.move(1, 2).move(0, 1).blocks[2].y,
+					"down piece test");
+			assertEqual(0, line.move(1, 2).move(-1, 0).blocks[1].x,
+					"left piece test 1");
+			assertEqual(0, line.move(1, 2).move(-1, 0).blocks[2].x,
+					"left piece test 2");
+			assertEqual(2, line.move(1, 2).move(1, 0).blocks[1].x,
+					"left piece test 3");
 		},
-		"piece rotation test" : function(){
-			assert_piece([[2,3], [1,3], [0,3], [-1,3]], line(1, 3).rotate_clockwise(), "rotate 1");
-			assert_piece([[1,4], [1,3], [1,2], [1,1]], 
-						 line(1, 3).rotate_clockwise().rotate_clockwise(), "rotate 1");
-			assert_piece([[0,3], [1,3], [2,3], [3,3]], 
-						 line(1, 3).rotate_clockwise().rotate_clockwise().rotate_clockwise(), "rotate 1");
-			assert_piece([[1,2], [1,3], [1,4], [1,5]], 
-						 line(1, 3).rotate_clockwise().rotate_clockwise().rotate_clockwise().rotate_clockwise(), "rotate 1");
+		"piece rotation test" : function() {
+			assertPiece([[2, 3], [1, 3], [0, 3], [-1, 3]], line.move(1, 3)
+					.rotateClockwise(), "rotate 1");
+			assertPiece([[1, 4], [1, 3], [1, 2], [1, 1]], line.move(1, 3)
+					.rotateClockwise().rotateClockwise(), "rotate 1");
+			assertPiece([[0, 3], [1, 3], [2, 3], [3, 3]], line.move(1, 3)
+					.rotateClockwise().rotateClockwise().rotateClockwise(),
+					"rotate 1");
+			assertPiece([[1, 2], [1, 3], [1, 4], [1, 5]], line.move(1, 3)
+					.rotateClockwise().rotateClockwise().rotateClockwise()
+					.rotateClockwise(), "rotate 1");
 		}
 	}
 }
 
 boardTests = {
 	suite_name : "Board Tests",
-	tests :  {
-		"simple test1" : function(){
+	tests : {
+		"simple test1" : function() {
 			var b = new Board(10, 20);
-			assert_equal(null, b.get_block_at(2,2));
-			b.place_piece(line(3, 5));
-			assert_not_null(b.get_block_at(3, 5));
-			var row1 = b.get_row(4)
-			assert_not_null(row1[3]);
-			assert_equal(null, row1[4]);
+			assertEqual(null, b.getBlockAt(2, 2));
+			b.placePiece(line.move(3, 5));
+			assertNotNull(b.getBlockAt(3, 5));
 		},
-		"complete test1" : function(){
+		"complete test1" : function() {
 			var b = new Board(8, 20);
-			b.place_piece(line(2, 6).rotate_clockwise());
-			b.place_piece(line(6, 6).rotate_clockwise());
-			b.place_piece(line(2, 7).rotate_clockwise());
-			b.place_piece(line(6, 7).rotate_clockwise());
-			assert_equal([6, 7], b.find_completed_rows());
+			b.placePiece(line.move(2, 6).rotateClockwise());
+			b.placePiece(line.move(6, 6).rotateClockwise());
+			b.placePiece(line.move(2, 7).rotateClockwise());
+			b.placePiece(line.move(6, 7).rotateClockwise());
+			assertEqual([6, 7], b.find_completed_rows());
 		},
-		"remove test1" : function(){
+		"remove test1" : function() {
 			var b = new Board(8, 20);
-			b.place_piece(line(2, 6).rotate_clockwise());
-			b.place_piece(line(6, 6).rotate_clockwise());
-			b.place_piece(line(2, 5).rotate_clockwise());
-			b.remove_row(6);
-			assert_equal([], b.find_completed_rows());
-			assert_not_null(b.get_block_at(0, 6));
-			assert_not_null(b.get_block_at(1, 6));
-			assert_not_null(b.get_block_at(2, 6));
-			assert_not_null(b.get_block_at(3, 6));
+			b.placePiece(line.move(2, 6).rotateClockwise());
+			b.placePiece(line.move(6, 6).rotateClockwise());
+			b.placePiece(line.move(2, 5).rotateClockwise());
+			b.removeRow(6);
+			assertEqual([], b.find_completed_rows());
+			assertNotNull(b.getBlockAt(0, 6));
+			assertNotNull(b.getBlockAt(1, 6));
+			assertNotNull(b.getBlockAt(2, 6));
+			assertNotNull(b.getBlockAt(3, 6));
 		}
 
 	}

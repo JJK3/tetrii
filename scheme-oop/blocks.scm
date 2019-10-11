@@ -1,30 +1,17 @@
 ;;; This file contains the most basic components of tetris.
 ;;; -------------------------------------------------------
 
-;; Given a list of booleans, are they all true?
-(define and-list (lambda (lst) 
-                   (if (null? lst) 
-                       #t
-                       (and (car lst) 
-                            (and-list (cdr lst))))))
-
 ;; Tests whether 2 lists of objects are equal?
 (define list-equals? (lambda (x y)
                       (if (or (null? x) (null? y)) #t
                           (and (send (car x) equals? (car y))
                                (list-equals? (cdr x) (cdr y))))))
 
-;; Picks the x-th element in a list (0 index)
-(define pick (lambda (lst x) 
-               (if (= 0 x) (car lst)
-                   (pick (cdr lst) (- x 1)))))
-
 ;; Selects a random element in the given list
 (define random-in-list 
   (lambda (lst) 
-    (pick lst
+    (list-ref lst
           (random (length lst)))))
-
 
 ;; Main Class. A single tetris block
 (define block%
@@ -141,15 +128,7 @@
 ;;              ##
 (define make-n2-group (lambda (x y) (make-block-group x y '((0 0) (-1 0) (0 1) (1 1)) "DarkOrange")))
 
-
+(define group-functions (list make-t-group make-I-group make-l1-group make-l2-group make-square-group make-n1-group make-n2-group))
  
 ;; Select a random piece
-(define get-random-group 
-  (lambda (x y) (random-in-list
-              (list (make-t-group x y)
-                    (make-I-group x y)
-                    (make-l1-group x y)
-                    (make-l2-group x y)
-                    (make-square-group x y)
-                    (make-n1-group x y)
-                    (make-n2-group x y)))))
+(define get-random-group (lambda (x y) ((random-in-list group-functions) x y)))

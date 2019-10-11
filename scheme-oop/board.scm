@@ -40,28 +40,27 @@
                           (remove-row y)
                           (shift-down! y))))))
           (loop-x (- width 1)))))
-
+     
      (will-block-fit? (lambda (block) 
                         (let ((x (get-field x block))
                               (y (get-field y block)))
                           (and (>= x 1) (>= y 1) 
                                (< y height) (< x width)
-                               (and-list (map
-                                          (lambda (blk) (not  (and (= x (get-field x blk))
-                                                                   (= y (get-field y blk)))))
-                                          block-list))))))
+                               (andmap
+                                (lambda (blk) (not  (and (= x (get-field x blk))
+                                                         (= y (get-field y blk)))))
+                                block-list)))))
      (will-group-fit? (lambda (group) 
-                        (and-list    
-                         (map (lambda (x) (will-block-fit? x))
-                              (get-field block-list group)))))
+                        (andmap (lambda (x) (will-block-fit? x))
+                                (get-field block-list group))))
      
      ;;is the given xy coordinate empty? : (x y) -> boolean
      (is-space-empty? (lambda (test-x test-y) 
-                        (and-list (map 
-                                   (lambda (block) (not (and 
-                                                         (= test-x (get-field x block))
-                                                         (= test-y (get-field y block)))))
-                                   block-list))))
+                        (andmap 
+                         (lambda (block) (not (and 
+                                               (= test-x (get-field x block))
+                                               (= test-y (get-field y block)))))
+                         block-list)))
      
      ;;is the given block group touching the bottom blocks?
      ;;ASSUME: the given group has not yet been added
@@ -93,7 +92,7 @@
                                       (begin
                                         (if (piece-down!)
                                             (piece-full-down!))))))
-                                           
+     
      (piece-left! (lambda () (move-helper (generic block-group% left))))
      (piece-rot! (lambda () (move-helper (generic block-group% rot-left))))
      (piece-right! (lambda () (move-helper (generic block-group% right))))

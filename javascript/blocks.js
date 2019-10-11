@@ -1,28 +1,15 @@
-Array.prototype.map = function(transformer) {
-	var result = []
-	for (var i=0; i<this.length; i++) {
-		result.push(transformer(this[i]));
+/** Create a range of integers. */
+function range(start, end) {
+	var result = [];
+	for ( var i = start; i < end; i++) {
+		result.push(i);
 	}
 	return result;
 }
 
-Array.prototype.filter = function(predicate) {
-	var result = []
-	for (var i=0; i<this.length; i++) {
-		if (predicate(this[i])) {
-			result.push(this[i]);
-		}
-	}
-	return result;
-}
-
-Array.prototype.all = function(predicate) {
-	for (var i=0; i<this.length; i++) {
-		if (!predicate(this[i])) {
-			return false;
-		}
-	}
-	return true;
+/** Pick a random element from an array. */
+function pickRandom(arr) {
+	return arr[Math.floor(Math.random() * arr.length)];
 }
 
 /**  Block object */
@@ -30,97 +17,68 @@ function Block(x, y, color) {
 	this.x = x;
 	this.y = y;
 	this.color = color;
-	this.down = function(){ return new Block(this.x, y + 1, this.color); }
-	this.left = function(){ return new Block(this.x - 1, this.y, this.color); }
-	this.right = function(){ return new Block(this.x + 1, this.y, this.color); }
+
+	/** Create a new Block moved from this block. */
+	this.move = function(dx, dy) {
+		return new Block(x + dx, y + dy, this.color);
+	}
+
+	/** Rotate this block clockwise around a point. */
+	this.rotateClockwise = function(pX, pY) {
+		return new Block(pX + (pY - y), pY + (x - pX), this.color);
+	}
 }
 
 /** Piece object */
-function Piece(center, blocks) {
-	this.center = center;
+function Piece(blocks) {
 	this.blocks = blocks;
-	this.down = function(){ 
-		return new Piece(this.center.down(), this.blocks.map(function(b){ return b.down(); }));
+
+	/** Create a new, moved Piece. */
+	this.move = function(x, y) {
+		return new Piece(this.blocks.map(function(b) {
+			return b.move(x, y);
+		}));
 	},
-	this.left = function(){ 
-		return new Piece(this.center.left(), this.blocks.map(function(b){ return b.left(); }));
-	},
-	this.right = function(){ 
-		return new Piece(this.center.right(), this.blocks.map(function(b){ return b.right(); }));
-	},
-	this.rotate_clockwise = function() {
-		var center = this.center;
-		return new Piece(this.center, this.blocks.map(function(b){ 
-            var relative_x = b.x - center.x;
-			var relative_y = b.y - center.y;
-            var x = center.x - relative_y
-            var y = center.y + relative_x
-            return new Block(x, y, b.color)
+
+	/** Rotate this block clockwise around a point. */
+	this.rotateClockwise = function() {
+		var center = this.blocks[1];
+		return new Piece(this.blocks.map(function(b) {
+			return b.rotateClockwise(center.x, center.y);
 		}));
 	}
 }
 
-function piece_helper(center, relative_coords){
-	var blocks = [];
-	for (var i=0; i<relative_coords.length; i++) {
-		var coords = relative_coords[i];
-		blocks.push(new Block(coords[0] + center.x, coords[1] + center.y, center.color));
-	}
-	return new Piece(center, blocks);
+function makePiece(color, coords) {
+	return new Piece(coords.map(function(c) {
+		return new Block(c[0], c[1], color);
+	}));
 }
 
-/** Create a new line piece. */
-function line(x, y) {
-	return piece_helper(new Block(x, y, "blue"), [[0,-1], [0,0], [0,1], [0,2]]);
-}
+var line = makePiece("#00eaff", [[0, -1], [0, 0], [0, 1], [0, 2]]);
+var square = makePiece("#BB0000", [[0, 0], [1, 0], [1, 1], [0, 1]]);
+var l_shape1 = makePiece("#2dd400", [[-1, 0], [0, 0], [1, 0], [1, 1]]);
+var l_shape2 = makePiece("#ff950c", [[-1, 0], [0, 0], [1, 0], [1, -1]]);
+var n_shape1 = makePiece("#2ea4ff", [[-1, 0], [0, 0], [0, 1], [1, 1]]);
+var n_shape2 = makePiece("#4b0063", [[-1, 0], [0, 0], [0, -1], [1, -1]]);
+var t_shape = makePiece("#0000BB", [[-1, 0], [0, 0], [0, -1], [1, 0]]);
 
-/** Create a new square piece. */
-function square(x, y) {
-	return piece_helper(new Block(x, y, "#BB0000"), [[0, 0], [1,0], [1,1], [0,1]]);
+function randomPiece(x, y) {
+	var shapes = [line, square, l_shape1, l_shape2, n_shape1, n_shape2, t_shape];
+	return pickRandom(shapes).move(x, y);
 }
-
-/** Create a new square piece. */
-function l_shape1(x, y) {
-	return piece_helper(new Block(x, y, "#2dd400"), [[-1,0], [0,0], [1,0], [1,1]]);
-}
-
-/** Create a new square piece. */
-function l_shape2(x, y) {
-	return piece_helper(new Block(x, y, "#ff950c"), [[-1,0], [0,0], [1,0], [1,-1]]);
-}
-
-/** Create a new square piece. */
-function n_shape1(x, y) {
-	return piece_helper(new Block(x, y, "#2ea4ff"), [[-1,0], [0,0], [0,1], [1,1]]);
-}
-
-/** Create a new square piece. */
-function n_shape2(x, y) {
-	return piece_helper(new Block(x, y, "#4b0063"), [[-1,0], [0,0], [0,-1], [1,-1]]);
-}
-
-/** Pick a random element from an array. */
-function pick_random(arr) {
-	return arr[Math.floor(Math.random() * arr.length)];
-}
-
-function random_piece(x, y) {
-	var constructors = [line, square, l_shape1, l_shape2, n_shape1, n_shape2];
-	return pick_random(constructors)(x, y);
-}
-
 
 function Board(width, height) {
-	this.current_piece = random_piece((width / 2) - 1, 1);
-	this.placed_blocks = []
+	this.currentPiece = randomPiece((width / 2) - 1, 1);
+	this.placedBlocks = []
 	this.width = width;
 	this.height = height;
 	this.score = 0;
-	this.is_game_done = false;
 
-	this.get_block_at = function(x, y) {
-		for (var i=0; i<this.placed_blocks.length; i++) {
-			var b = this.placed_blocks[i];
+	/** Get the block at the given coordinates or null if it doesn't exist. */
+	this.getBlockAt = function(x, y) {
+		for ( var i = 0; i < this.placedBlocks.length; i++) {
+			var b = this.placedBlocks[i];
 			if (b.x == x && b.y == y) {
 				return b;
 			}
@@ -128,95 +86,92 @@ function Board(width, height) {
 		return null;
 	};
 
-	this.get_row = function(y){
-		var result = []
-		for (var x=0; x<this.width; x++) {
-			result.push(this.get_block_at(x, y));
-		}
-		return result;
-	};
-
-	this.is_row_complete = function(y) {
-		return this.get_row(y).all(function(b) { return b != null; });
-	};
-
-	this.find_completed_rows = function() {
-		var result = [];
-		for (var y=0; y<this.height; y++) {
-			if (this.is_row_complete(y)) {
-				result.push(y);
+	/** Is the given row complete? i.e. is it filled with blocks? */
+	this.isRowComplete = function(y) {
+		for ( var x = 0; x < this.width; x++) {
+			if (this.getBlockAt(x, y) == null) {
+				return false;
 			}
 		}
-		return result;
+		return true;
 	};
 
-	this.is_block_valid = function(b) {
-		return b.x >= 0 && b.x < this.width && 
-			b.y >= 0 && b.y < this.height && 
-			this.get_block_at(b.x, b.y) == null;
+	/** Get an array of indices of completed rows. */
+	this.find_completed_rows = function() {
+		return range(0, this.height).filter(this.isRowComplete, this);
 	};
 
-	this.is_piece_valid = function(piece) {
-		var board = this;
-		return piece.blocks.all(function(b) { 
-			return board.is_block_valid(b); 
-		});
+	/**
+	 * Does the given block fit on the board.
+	 * i.e. is it within bounds and doesn't overlap other blocks?
+	 */
+	this.doesBlockFit = function(b) {
+		return b.x >= 0 && b.x < this.width && b.y >= 0 && b.y < this.height
+				&& this.getBlockAt(b.x, b.y) == null;
 	};
-	
-	this.place_piece = function(piece) {
-		if (!this.is_piece_valid(piece)) {
+
+	/** Does the the given piece fit on the board? */
+	this.doesPieceFit = function(piece) {
+		return piece.blocks.every(this.doesBlockFit, this);
+	};
+
+	/** Add the blocks of the given piece to the board */
+	this.placePiece = function(piece) {
+		if (!this.doesPieceFit(piece)) {
 			throw "Cannot place an invalid piece";
 		}
-		for (var i=0; i<piece.blocks.length; i++) {
-			this.placed_blocks.push(piece.blocks[i]);
+		for ( var i = 0; i < piece.blocks.length; i++) {
+			this.placedBlocks.push(piece.blocks[i]);
 		}
 	};
 
-    this.remove_row = function(y) {
-        this.placed_blocks = this.placed_blocks
-			.filter(function(b){ return b.y != y; })
+	/** Remove all the blocks on the given row and shift higher blocks down. */
+	this.removeRow = function(y) {
+		this.placedBlocks = this.placedBlocks
+			.filter(function(b) { return b.y != y;})
 			.map(function(b) {
-				if (b.y < y) {
-					return b.down();
-				} else {
-					return b;
-				}
-			});
-    }
+				return (b.y < y) ? b.move(0, 1) : b;
+			}
+		);
+	}
 
-    this.is_piece_on_bottom = function(piece) { 
-		return !this.is_piece_valid(piece.down());
+	/** Is the given piece touching any blocks beneath it? */
+	this.isPieceOnBottom = function(piece) {
+		return this.doesPieceFit(piece) && !this.doesPieceFit(piece.move(0, 1));
 	};
 
-	this.set_current_piece = function(piece){
-		var valid = this.is_piece_valid(piece);
-		if (valid){
-			this.current_piece = piece;
+	/** Set the current piece if it fits.  Returns whether the given piece fits or not. */
+	this.setCurrentPiece = function(piece) {
+		var valid = this.doesPieceFit(piece);
+		if (valid) {
+			this.currentPiece = piece;
 		}
 		return valid;
 	};
 
-	this.push_current_piece_down = function() {
-        var result = false;
-        if (this.is_piece_on_bottom(this.current_piece)) {
-            this.place_piece(this.current_piece);
-            var complete_rows = this.find_completed_rows();
-			for (var i=0; i<complete_rows.length; i++) {
-				this.remove_row(complete_rows[i]);
+	/**
+	 * Pushes the current piece down and removes/scores any complete rows.
+	 * Returns whether the game is done or not.
+	 */
+	this.push_currentPiece_down = function() {
+		var result = false;
+		if (this.isPieceOnBottom(this.currentPiece)) {
+			this.placePiece(this.currentPiece);
+			var completeRows = this.find_completed_rows();
+			completeRows.forEach(this.removeRow, this);
+			var score_points = {
+				0 : 0,
+				1 : 10,
+				2 : 25,
+				3 : 40,
+				4 : 55
 			}
-            var score_points = {0:0, 1:10, 2:25, 3:40, 4:55}
-            this.score += score_points[complete_rows.length];
-            result = true;
-            this.current_piece = random_piece((this.width / 2) - 1, 1);
-        } else {
-            this.current_piece = this.current_piece.down();
-        }
-        if (!this.is_piece_valid(this.current_piece)){
-            alert("Game is Finished");
-            this.is_game_done = true;
-        }
-        return result;
-	};	
+			this.score += score_points[completeRows.length];
+			result = true;
+			this.currentPiece = randomPiece((this.width / 2) - 1, 1);
+		} else {
+			this.currentPiece = this.currentPiece.move(0, 1);
+		}
+		return !this.doesPieceFit(this.currentPiece);
+	};
 }
-
-

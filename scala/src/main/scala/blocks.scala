@@ -3,9 +3,8 @@ import java.awt.Color
 
 /** An individual block */
 class Block(val x: Int, val y: Int, val color: Color) {
-    def down = new Block(x, y + 1, color)
-    def left = new Block(x - 1, y, color)
-    def right = new Block(x + 1, y, color)
+	def move(dx: Int, dy: Int) = new Block(x + dx, y + dy)
+	val down = move(0, 1)
     def add(other: Block) = new Block(x + other.x, y + other.y, color)
 }
 
@@ -25,16 +24,16 @@ object Piece {
     }
 
     private def creation_helper(x: Int, y: Int, block_coords: List[(Int, Int)], color: Color): Piece = {
-        val blocks = block_coords.map { (xy) => new Block(xy._1 + x, xy._2 + y, color) }
-        return new Piece(new Block(x, y, color), blocks, color)
+        val blocks = block_coords.map { (xy) => new Block(xy._1, xy._2, color) }
+        return new Piece(new Block(blocks, color)).move(x, y)
     }
 }
 
 /** A group of blocks */
-class Piece(val center: Block, val blocks: List[Block], val color: Color) {
-    def down = new Piece(center.down, blocks.map { _.down }, color)
-    def left = new Piece(center.left, blocks.map { _.left }, color)
-    def right = new Piece(center.right, blocks.map { _.right }, color)
+class Piece(val blocks: List[Block], val color: Color) {
+    val center = blocks[1]
+	val down = move(0, 1)
+	def move(dx: Int, dy: Int) = new Piece(blocks.map { _.move(dx, dy) }, color)
     def rotate_clockwise = new Piece(center,
         blocks.map { (b) =>
             val relative_xy = (b.x - center.x, b.y - center.y)
