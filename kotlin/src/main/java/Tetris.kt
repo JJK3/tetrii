@@ -41,8 +41,10 @@ class Piece(val blocks: List<Block>) {
 }
 
 /** The Tetris board */
-data class Board(val blocks: List<Block>, val width: Int, val height: Int, val score: Int = 0,
-                 private val piece: Piece? = null) {
+data class Board(
+    val blocks: List<Block>, val width: Int, val height: Int, val score: Int = 0,
+    private val piece: Piece? = null
+) {
 
     val currentPiece = piece ?: randomPiece()
 
@@ -51,7 +53,13 @@ data class Board(val blocks: List<Block>, val width: Int, val height: Int, val s
     }
 
     /** A mapping of completed rows to the number of points you get. */
-    val scorePoints = mapOf(Pair(0, 0), Pair(1, 10), Pair(2, 25), Pair(3, 40), Pair(4, 55))
+    fun scorePoints(rows: Int) = when (rows) {
+        1 -> 10
+        2 -> 25
+        3 -> 40
+        4 -> 55
+        else -> 0
+    }
 
     /** Get the block at the given coordinates if there is one or null otherwise. */
     fun blockAt(x: Int, y: Int) = blocks.firstOrNull { it.x == x && it.y == y }
@@ -90,7 +98,7 @@ data class Board(val blocks: List<Block>, val width: Int, val height: Int, val s
         completeRows.forEach { removeRow(it) }
         val newBlocks = if (isPieceOnBottom()) blocks + currentPiece.blocks else blocks
         val piece = if (isPieceOnBottom()) randomPiece() else currentPiece.move(0, 1)
-        val newScore = score + (scorePoints[completeRows.size] ?: 0)
+        val newScore = score + scorePoints(completeRows.size)
         return Board(newBlocks, width, height, newScore, piece)
     }
 }
@@ -104,6 +112,7 @@ class Tetris(blockWidth: Int, blockHeight: Int) : JPanel() {
     init {
         preferredSize = Dimension(blockWidth * BLOCK_SIZE + 1, blockHeight * BLOCK_SIZE + 1)
     }
+
     var board = Board(ArrayList(), blockWidth, blockHeight)
     val myKeyListener = object : KeyAdapter() {
         override fun keyPressed(e: KeyEvent) {
