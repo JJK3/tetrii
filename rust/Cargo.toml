@@ -6,6 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-im = "15.0.0"
+im = "15.1.0"
 rand = "0.8.4"
 ncurses = "5.101.0"
