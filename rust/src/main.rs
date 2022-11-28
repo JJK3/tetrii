@@ -1,8 +1,15 @@
-extern crate core;
+mod tests;
+mod tetris_core;
 
+use std::borrow::Borrow;
+use ncurses::*;
 use rand::seq::SliceRandom;
-
-use Event::{MoveDown, MoveLeft, MoveRight, NewGame, NewPiece, Rotate};
+use std::thread;
+use std::thread::sleep;
+use std::time::Duration;
+use std::sync::{Arc, Mutex};
+use ncurses::CURSOR_VISIBILITY::CURSOR_INVISIBLE;
+use Event::*;
 
 #[derive(Clone, Copy)]
 struct Point {
@@ -24,7 +31,6 @@ trait Movable {
 
     fn apply(&self, func: impl Fn(&Point) -> Point) -> Box<Self>;
 }
-
 
 #[derive(Clone, Copy)]
 enum Color {
@@ -51,7 +57,6 @@ impl Movable for Block {
     }
 }
 
-
 #[derive(Clone, Copy)]
 struct Piece {
     blocks: [Block; 4],
@@ -77,18 +82,30 @@ impl Piece {
     }
 
     fn random() -> Piece {
-        let functions = [Piece::line, Piece::n1_shape, Piece::n2_shape, Piece::l1_shape,
-            Piece::l2_shape, Piece::t1_shape, Piece::square_shape];
-        functions.choose(&mut rand::thread_rng()).unwrap()()
+        [
+            Piece::line,
+            Piece::n1_shape,
+            Piece::n2_shape,
+            Piece::l1_shape,
+            Piece::l2_shape,
+            Piece::t1_shape,
+            Piece::square_shape
+        ].choose(&mut rand::thread_rng()).unwrap()()
+    }
+
+    /** Create a new random piece at the top of the board */
+    fn new_random_piece(width: i16) -> Piece {
+        *Piece::random().apply(|p| Point { x: p.x + (width / 2) - 1, y: p.y + 1 })
     }
 }
 
 impl Movable for Piece {
     fn apply(&self, func: impl Fn(&Point) -> Point) -> Box<Self> {
-        Box::new(Piece { blocks: self.blocks.map(|b| *b.apply(&func)) })
+        return Box::new(Piece { blocks: self.blocks.map(|b| *b.apply(&func)) });
     }
 }
 
+#[derive(Clone)]
 struct Board {
     width: i16,
     height: i16,
@@ -96,11 +113,24 @@ struct Board {
     blocks: Vec<Block>,
     score: u32,
     is_game_over: bool,
+    log: Vec<Event>,
 }
 
 impl Board {
     fn new(width: i16, height: i16) -> Self {
-        Board { width, height, active_piece: Board::new_random_piece(width), blocks: vec![], score: 0, is_game_over: false }
+        let piece = Piece::new_random_piece(width);
+        Board {
+            width,
+            height,
+            active_piece: piece,
+            blocks: vec![],
+            score: 0,
+            is_game_over: false,
+            log: vec![
+                NewGame(width, height),
+                NewPiece(piece),
+            ],
+        }
     }
 
     fn assert_game_not_done(&self) {
@@ -114,7 +144,7 @@ impl Board {
         self.assert_game_not_done();
         let next_position = *self.active_piece.apply(func);
         if self.does_piece_fit(&next_position) {
-            self.active_piece = next_position
+            self.active_piece = next_position;
         }
     }
 
@@ -131,22 +161,17 @@ impl Board {
             self.remove_and_shift_rows_down(complete_rows);
         }
 
-        self.active_piece = self.new_random_piece(self.width);
-        if self.does_piece_fit(&self.active_piece) {
-            self.is_game_over = true
+        self.active_piece = Piece::new_random_piece(self.width);
+        if !self.does_piece_fit(&self.active_piece) {
+            self.is_game_over = true;
         }
-    }
-
-    /** Create a new random piece at the top of the board */
-    fn new_random_piece(width: i16) -> Piece {
-        *Piece::random().apply(|p| Point { x: p.x + (width / 2) - 1, y: p.y + 1 })
     }
 
     /** Remove complete rows and shift other nodes down */
     fn remove_and_shift_rows_down(&mut self, complete_rows: Vec<i16>) {
         self.assert_game_not_done();
         self.blocks = self.blocks.iter()
-            .filter(|b| complete_rows.contains(&b.point.y))// Remove the row
+            .filter(|b| !complete_rows.contains(&b.point.y))// Remove the row
             .map(|b|
                 // For every completed row, shift blocks down
                 complete_rows.iter()
@@ -156,7 +181,7 @@ impl Board {
     }
 
     fn is_piece_on_bottom(&self) -> bool {
-        self.does_piece_fit(&self.active_piece.apply(Piece::down))
+        !self.does_piece_fit(&self.active_piece.apply(Piece::down))
     }
 
     /** How many points do you get for completing 1 row? 2 rows etc. */
@@ -190,22 +215,27 @@ impl Board {
 
     fn apply(&mut self, event: &Event) {
         self.assert_game_not_done();
-        match event.clone() {
-            NewGame(w, h) => {
-                self.width = w;
-                self.height = h;
-            }
+        let e = event.clone();
+        match e {
+            NewGame(_, _) => panic!("Game is already started"),
             NewPiece(p) => self.active_piece = p,
-            MoveLeft() => self.move_piece(Piece::left),
-            MoveRight() => self.move_piece(Piece::right),
-            MoveDown() => {
+            MoveLeft => self.move_piece(Piece::left),
+            MoveRight => self.move_piece(Piece::right),
+            MoveDown => {
                 self.move_piece(Piece::down);
                 if self.is_piece_on_bottom() {
                     self.place_piece();
                 }
             }
-            Rotate() => self.move_piece(self.active_piece.rotate())
+            MoveAllTheWayDown => {
+                while !self.is_piece_on_bottom() {
+                    self.move_piece(Piece::down);
+                }
+                self.place_piece();
+            }
+            Rotate => self.move_piece(self.active_piece.rotate())
         }
+        self.log.push(e)
     }
 }
 
@@ -213,10 +243,11 @@ impl Board {
 enum Event {
     NewGame(i16, i16),
     NewPiece(Piece),
-    MoveLeft(),
-    MoveRight(),
-    MoveDown(),
-    Rotate(),
+    MoveLeft,
+    MoveRight,
+    MoveDown,
+    MoveAllTheWayDown,
+    Rotate,
 }
 
 struct EventLog {
@@ -229,16 +260,120 @@ impl EventLog {
     }
 }
 
-mod tests {
-    use crate::Board;
+struct Game {
+    window: Foo,
+    board: Board,
+}
 
-    #[test]
-    fn test_board1() {
-        let x = Board::new(10,30);
-        x.apply()
+impl Game {
+    pub fn new() -> Self {
+        Game {
+            window: Foo { window: initscr() },
+            board: Board::new(10, 20),
+        }
+    }
+
+    fn curses_color(c: Color) -> (i16, i16, i16, chtype) {
+        return match c {
+            Color::Cyan => (1, COLOR_CYAN, COLOR_BLACK, '#' as chtype),
+            Color::Magenta => (2, COLOR_MAGENTA, COLOR_BLACK, '#' as chtype),
+            Color::Red => (3, COLOR_RED, COLOR_BLACK, '#' as chtype),
+            Color::Blue => (4, COLOR_BLUE, COLOR_BLACK, '#' as chtype),
+            Color::Orange => (5, COLOR_RED, COLOR_YELLOW, '#' as chtype),
+            Color::Yellow => (6, COLOR_YELLOW, COLOR_BLACK, '#' as chtype),
+            Color::Green => (7, COLOR_GREEN, COLOR_BLACK, '#' as chtype),
+        };
+    }
+
+    fn draw_block(&self, block: &Block) {
+        let w = &self.window.window;
+        wmove(*w, block.point.y as i32 + 1, block.point.x as i32 + 1);
+        let color = Game::curses_color(block.color);
+        wcolor_set(*w, color.0);
+        addch(color.3);
+    }
+
+    fn draw(&self) {
+        let board = &self.board;
+        clear();
+        wcolor_set(self.window.window, 99);
+        wmove(self.window.window, 1, 30);
+        waddstr(self.window.window, format!("Score: {}", self.board.score).borrow());
+        mvhline(0, 1, '-' as chtype, board.width as i32);
+        mvvline(1, 0, '|' as chtype, board.height as i32);
+        mvvline(1, board.width as i32 + 1, '|' as chtype, board.height as i32 );
+        mvhline(board.height as i32 + 1, 1, '-' as chtype, board.width as i32 );
+        for block in board.active_piece.blocks {
+            self.draw_block(&block)
+        }
+        for block in board.blocks.clone() {
+            self.draw_block(&block)
+        }
+    }
+
+    fn event(&mut self, e: &Event) {
+        self.board.apply(e);
+        self.draw();
+        refresh();
+    }
+
+    fn play() {
+        let game = Game::new();
+        start_color();
+        curs_set(CURSOR_INVISIBLE);
+        let all_colors = vec![
+            Color::Cyan,
+            Color::Magenta,
+            Color::Red,
+            Color::Blue,
+            Color::Orange,
+            Color::Yellow,
+            Color::Green,
+        ];
+        init_pair(99, COLOR_WHITE, COLOR_BLACK);
+        for c in all_colors {
+            let cc = Game::curses_color(c);
+            init_pair(cc.0, cc.1, cc.2);
+        }
+        let board = Arc::new(Mutex::new(game));
+        let b = Arc::clone(&board);
+        let b2 = Arc::clone(&board);
+        thread::spawn(move || {
+            while !b.clone().lock().unwrap().board.is_game_over {
+                sleep(Duration::from_millis(1000));
+                b.clone().lock().unwrap().event(&Event::MoveDown);
+            }
+        });
+        let mut ch = getch();
+        while ch != 'q' as i32 && !b2.lock().unwrap().board.is_game_over {
+            ch = getch();
+            let mut guard = b2.lock().unwrap();
+            if !guard.board.is_game_over {
+                if ch == 65 {
+                    guard.event(&Event::Rotate);
+                } else if ch == 68 {
+                    guard.event(&Event::MoveLeft);
+                } else if ch == 67 {
+                    guard.event(&Event::MoveRight);
+                } else if ch == 66 {
+                    guard.event(&Event::MoveDown);
+                } else if ch == 32 {
+                    guard.event(&Event::MoveAllTheWayDown);
+                }
+            }
+        }
+        endwin();
+        println!("Game over! Your score: {}", b2.lock().unwrap().board.score);
     }
 }
 
+
+struct Foo {
+    window: *mut i8,
+}
+
+unsafe impl Send for Foo {}
+
 fn main() {
-    println!("Hello, world!");
+    Game::play();
 }
